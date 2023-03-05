@@ -1,6 +1,10 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\SearchHistoryController;
+use App\Http\Controllers\AuthController;
+use App\Models\Product;
+use App\Models\SearchHistory;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +18,26 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+/*User Authentication*/
+Route::controller(AuthController::class)
+->group(function () {
+    Route::post('/register', 'signUp');
+    Route::post('/login', 'signIn');
+    Route::middleware('auth:api')->post('/logout', 'signOut');
+});
+
+Route::middleware('auth:api')->group(function () {
+    Route::prefix('/products')
+    ->controller(ProductController::class)
+    ->group(function () {
+        Route::post('/', 'store')->can('create', Product::class);
+    });
+
+    Route::prefix('/search-histories')
+    ->controller(SearchHistoryController::class)
+    ->group(function () {
+        Route::post('/', 'store')->can('createSearchHistory', SearchHistory::class);
+        Route::get('/buyer', 'getBuyerSearchHistory')->can('viewBuyerSearchHistory', SearchHistory::class);
+        Route::get('/salesman', 'getSalesmanSearchHistory')->can('viewSalesmanSearchHistory', SearchHistory::class);
+    });
 });
